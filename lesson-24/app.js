@@ -15,7 +15,7 @@ const express = require("express"), // express를 요청
 // controllers 폴더의 파일을 요청
 const pagesController = require("./controllers/pagesController"),
   subscribersController = require("./controllers/subscribersController"),
-  usersController = require("./controllers/usersController.TODO"),
+  usersController = require("./controllers/usersController"),
   coursesController = require("./controllers/coursesController"),
   talksController = require("./controllers/talksController"),
   trainsController = require("./controllers/trainsController"),
@@ -70,9 +70,9 @@ router.use(connectFlash()); // connect-flash 미들웨어를 사용
  * Listing 24.1 (p. 351)
  * main.js에서 passport의 요청과 초기화
  */
-// passport를 요청
-// passport를 초기화
-// passport가 Express.js 내 세션을 사용하도록 설정
+const passport = require("passport"); // passport를 요청
+router.use(passport.initialize()); // passport를 초기화
+router.use(passport.session()); // passport가 Express.js 내 세션을 사용하도록 설정
 
 /**
  * @TODO: 
@@ -80,29 +80,25 @@ router.use(connectFlash()); // connect-flash 미들웨어를 사용
  * Listing 24.2 (p. 351)
  * main.js에서 passport 직렬화 설정
  */
-// User 모델을 요청
-// User 모델의 인증 전략을 passport에 전달
-// User 모델의 직렬화 메서드를 passport에 전달
-// User 모델의 역직렬화 메서드를 passport에 전달
+const User = require("./models/User"); // User 모델을 요청
+passport.use(User.createStrategy()); // User 모델의 인증 전략을 passport에 전달
+passport.serializeUser(User.serializeUser()); // User 모델의 직렬화 메서드를 passport에 전달
+passport.deserializeUser(User.deserializeUser()); // User 모델의 역직렬화 메서드를 passport에 전달
+
+// 여기에 추가합니다.
+router.use((req, res, next) => {
+  // 응답 객체상에서 플래시 메시지의 로컬 flashMessages로의 할당
+  res.locals.flashMessages = req.flash(); // flash 메시지를 뷰에서 사용할 수 있도록 설정
+  res.locals.currentUser = req.user; 
+  res.locals.loggedIn = !!req.user; // 로그인 여부를 확인하는 불리언 값을 로컬 변수에 추가
+  next();
+});
 
 /**
  * Listing 22.2 (p. 327)
  * 응답상에서 connectFlash와 미들웨어와의 연계
  */
-router.use((req, res, next) => {
-  // 응답 객체상에서 플래시 메시지의 로컬 flashMessages로의 할당
-  res.locals.flashMessages = req.flash(); // flash 메시지를 뷰에서 사용할 수 있도록 설정
 
-  /**
-   * @TODO: 
-   * 
-   * Listing 24.7 (p. 358)
-   * 사용자 정의 미들웨어로 로컬 변수 추가
-   */
-  // 로그인 여부를 확인하는 불리언 값을 로컬 변수에 추가
-  // 현재 사용자를 로컬 변수에 추가
-  next();
-});
 
 /**
  * =====================================================================
