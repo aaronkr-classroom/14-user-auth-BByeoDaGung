@@ -1,10 +1,6 @@
-// controllers/usersController.js
 "use strict";
 
-/**
- * Listing 18.11 (p. 271)
- * userController.js에서 인덱스 액션 생성과 index 액션의 재방문
- */
+const passport = require("passport"); // 추가된 passport 모듈
 const User = require("../models/User"); // 사용자 모델 요청
 
 /**
@@ -31,16 +27,37 @@ module.exports = {
    * Listing 23.3 (p. 336)
    * userController.js로의 로그인과 인증 액션 추가
    */
+  login: (req, res) => {
+    res.render("users/login", {
+      page: "login",
+      title: "Login Page"
+    });
+  },
 
-  /**
-   * @TODO: authenticate 액션
-   */
+  authenticate: (req, res, next) => {
+    passport.authenticate("local", (err, user, info) => {
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        req.flash("error", "Login failed. Please try again.");
+        return res.redirect("/users/login");
+      }
+      req.logIn(user, (err) => {
+        if (err) {
+          return next(err);
+        }
+        req.flash("success", "Login successful!");
+        res.redirect(`/users/${user._id}`);
+      });
+    })(req, res, next);
+  },
 
   index: (req, res, next) => {
-    User.find() // index 액션에서만 퀴리 실행
+    User.find() // index 액션에서만 쿼리 실행
       .then((users) => {
         // 사용자 배열로 index 페이지 렌더링
-        res.locals.users = users; // 응답상에서 사용자 데이터를 저장하고 다음 미들웨어 함수 호출
+        res.locals.users = users; // 응답에서 사용자 데이터를 저장하고 다음 미들웨어 함수 호출
         next();
       })
       .catch((error) => {
@@ -53,10 +70,6 @@ module.exports = {
     res.render("users/index", {
       page: "users",
       title: "All Users",
-      // flashMessages: {
-      //   // Listing 22.6 (p. 331) - 렌더링된 인덱스 뷰에서 플래시 메시지를 추가
-      //   success: "Loaded all users!",
-      // },
     }); // 분리된 액션으로 뷰 렌더링
   },
 
@@ -115,6 +128,36 @@ module.exports = {
    * Listing 23.7 (p. 346)
    * userController.js에서 validate 액션 추가
    */
+  validate: (req, res, next) => {
+    req
+      .sanitizeBody("email")
+      .normalizeEmail({
+        all_lowercase: true
+      })
+      .trim(); // "      string"
+
+    req
+      .check("email", "Email is invalid")
+      .isEmail();
+
+    req
+      .check("password", "Password cannot be empty.")
+      .notEmpty();
+
+    req.getValidationResult()
+      .then(result => {
+        if (!result.isEmpty()) {
+          let messages = result.array().map(m => m.msg);
+          req.skip = true;
+          req.flash("error", messages.join(" and "));
+        }
+        next();
+      })
+      .catch(error => {
+        console.log(`Validation error: ${error.message}`);
+        next(error);
+      });
+  },
 
   /**
    * [노트] 폼 데이터를 다시 채우기 위해 다양한 방법을 선택할 수 있다. (연구해보면)
@@ -143,7 +186,7 @@ module.exports = {
     let userId = req.params.id; // request params로부터 사용자 ID 수집
     User.findById(userId) // ID로 사용자 찾기
       .then((user) => {
-        res.locals.user = user; // 응답 객체를 통해 다음 믿들웨어 함수로 사용자 전달
+        res.locals.user = user; // 응답 객체를 통해 다음 미들웨어 함수로 사용자 전달
         next();
       })
       .catch((error) => {
