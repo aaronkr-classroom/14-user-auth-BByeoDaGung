@@ -110,19 +110,13 @@ router.use((req, res, next) => {
  * =====================================================================
  */
 
-// 애플리케이션에 Mongoose 설정
-const mongoose = require("mongoose"), // mongoose를 요청
-  dbName = "aaronkr";
-
-// 데이터베이스 연결 설정
-mongoose.connect(`mongodb://127.0.0.1:27017/${dbName}`, {
-  useNewUrlParser: true,
-});
-
-// 연결되면 메시지를 보냄
+const mongoose = require("mongoose");
+mongoose.connect(
+  "mongodb+srv://choys:JapurFJhWUDgdWXZ@bbyeodagung.erqm11u.mongodb.net/?retryWrites=true&w=majority&appName=BByeoDaGung"
+);
 const db = mongoose.connection;
 db.once("open", () => {
-  console.log(`Connected to ${dbName} MongoDB using Mongoose!`);
+  console.log("Connected to MONGODB!!!");
 });
 
 /**

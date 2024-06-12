@@ -88,12 +88,20 @@ module.exports = {
         res.locals.redirect = "/users";
         res.locals.user = user;
         // @TODO: 플래시 메시지 추가 - Listing 22.3 (p. 328)
+        req.flash(
+          "success",
+          `${user.fullName}'s account created!`
+        );
         next();
       })
       .catch((error) => {
         console.log(`Error saving user: ${error.message}`);
         res.locals.redirect = "/users/new";
         // @TODO: 플래시 메시지 추가 - Listing 22.3 (p. 328)
+        req.flash(
+          "error",
+          `Cloud not create account: ${error.message}`
+        );
         next(error);
       });
   },
